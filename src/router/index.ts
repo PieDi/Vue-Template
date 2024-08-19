@@ -1,4 +1,4 @@
-import { type Router } from 'vue-router'
+import { type Router, type RouteRecordRaw } from 'vue-router'
 import { baseRouterConfig } from './base'
 
 const modules = import.meta.glob([
@@ -25,11 +25,16 @@ const getName = (path: string): PNRouter => {
   return { path: pStr, name: nStr }
 }
 
+/**
+ * 约定文件路由
+ * views 文件夹下排除 component 会自动生成路由
+ * 菜单和路由是对应的关系，考虑到并不是所有的路由都需要生成菜单，需要生成菜单的需要在同一目录下有唯一 config.ts 文件，因为作为菜单需要有 title 等一系列配置，如不需要切记勿添加 config.ts 文件
+ * 其中 config.ts  name 属性有一定要求，就是根据路径层级必须 大驼峰命名，入 /home/top/top1  =>  HomeTopTop1  这样做的目的是保持唯一性 对应路由中的 name 属性 ，且需要默认 导出 {config}
+ */
 export const genRoutes = async () => {
-  const menu: any = []
-  const tRoutes: any = []
-  const componentMods: any[] = []  //组件信息
-  const configMods: any[] = []  // 配置文件信息
+  const tRoutes: Array<RouteRecordRaw> = [] // 路由信息存放数组
+  const componentMods: any[] = [] //组件信息
+  const configMods: any[] = [] // 配置文件信息
   for (const k in modules) {
     const mod = (await modules[k]()) as any
     if (!mod.default?.config) {
@@ -47,11 +52,10 @@ export const genRoutes = async () => {
       path,
       component: mod.default,
       meta: {
-        ...config?.default?.config
-      }
+        ...config?.default?.config,
+      },
     })
   }
-
   const pathMap: { [key: string]: any } = {}
   const firstFloor = tRoutes.filter((el: any) => el.path.lastIndexOf('/') === 0)
   firstFloor.forEach((el: any) => {
@@ -63,6 +67,7 @@ export const genRoutes = async () => {
       children: [],
     }
   })
+  console.log(23456, tRoutes, firstFloor)
   tRoutes
     .filter((el: any) => el.path.lastIndexOf('/') !== 0)
     .forEach((el: any) => {
@@ -79,26 +84,47 @@ export const genRoutes = async () => {
           pathMap[pk] = {
             path: `/${p}`,
             name: pk,
+            meta: el?.meta,
             children: [],
           }
         }
-        const eIdx = pathMap[tpk].children.findIndex(
+        const eIdx = pathMap[tpk]?.children?.findIndex(
           //@ts-ignore
-          el => el.name === pathMap[pk].name
+          el => el.name === pk
         )
         if (eIdx < 0) {
           pathMap[tpk].children.push(pathMap[pk])
         }
+      
         if (i === paths.length - 1) {
           pathMap[pk].component = el.component
         }
       }
     })
+
+
+  const tMenu: Array<RouteRecordRaw> = [] // 菜单信息存放数组
   firstFloor
     .map((el: any) => el.name)
     .forEach((k: string) => {
-      menu.push(pathMap[k])
+      tMenu.push(pathMap[k])
     })
+  const menu: Array<RouteRecordRaw> = [] // 菜单信息存放数组
+  const gMenu = (list: any[], tList: any[]) => {
+    list.forEach(el => {
+      if (el?.meta?.menu) {
+        if (el.children.length) { 
+          const tl: any[] = []
+          gMenu(el.children, tl)
+          el.children = tl
+        }
+        tList.push(el)
+      }
+    })
+    tList.sort((a, b) => a.meta.sort - b.meta.sort)
+  }
+  gMenu(tMenu, menu)
+  console.log(1234567, menu)
   return new Promise(res =>
     res({ routes: [...baseRouterConfig, ...tRoutes], menu })
   )
