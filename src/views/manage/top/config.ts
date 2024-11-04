@@ -1,8 +1,8 @@
 const config = {
-  name: 'User',
-  title: '用户',
+  name: 'HomeTop',
+  title: '首页-头部',
   icon: 'IconMenu',
-  sort: 3,
+  sort: 1,
   menu: true
 }
 export default {

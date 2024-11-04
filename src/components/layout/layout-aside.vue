@@ -29,7 +29,7 @@ const handleSelect = (_index: string) => {
       :router="true"
       @select="handleSelect"
     >
-    <el-sub-menu index="1">
+    <!-- <el-sub-menu index="1">
           <template #title>
             <el-icon><location /></el-icon>
             <span>Navigator One</span>
@@ -45,9 +45,8 @@ const handleSelect = (_index: string) => {
             <template #title>item four</template>
             <el-menu-item index="1-4-1">item one</el-menu-item>
           </el-sub-menu>
-        </el-sub-menu>
-      <!-- @vue-ignore -->
-      <el-menu-item v-for="m in configStore.activeMens" :index="m.name">
+        </el-sub-menu> -->
+      <el-menu-item v-for="m in configStore.activeMens" :index="m.name as string">
         <el-icon>
           <component :is="m?.meta?.icon || 'Setting'" />
         </el-icon>

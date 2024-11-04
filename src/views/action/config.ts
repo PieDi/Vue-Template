@@ -1,9 +1,8 @@
 const config = {
-  name: 'User',
-  title: '用户',
+  name: 'Action',
+  title: '行为',
   icon: 'IconMenu',
-  sort: 3,
-  menu: true
+  sort: 1,
 }
 export default {
   config,

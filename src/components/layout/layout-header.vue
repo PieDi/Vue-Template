@@ -33,8 +33,7 @@ const handleSelect = (_index: string) => {
       :collapse="isCollapse"
       @select="handleSelect"
     >
-      <!-- @vue-ignore -->
-      <el-menu-item v-for="m in configStore.menus" :index="m.name">
+      <el-menu-item v-for="m in configStore.menus" :index="m.name as string">
         <el-icon>
           <component :is="m?.meta?.icon || 'Setting'" />
         </el-icon>

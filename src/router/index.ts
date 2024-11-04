@@ -7,6 +7,7 @@ const modules = import.meta.glob([
   '!@/views/**/component/**/*.vue',
   '!@/views/**/component/**/config.ts',
 ])
+
 interface PNRouter {
   path: string
   name: string
@@ -28,8 +29,8 @@ const getName = (path: string): PNRouter => {
 /**
  * 约定文件路由
  * views 文件夹下排除 component 会自动生成路由
- * 菜单和路由是对应的关系，考虑到并不是所有的路由都需要生成菜单，需要生成菜单的需要在同一目录下有唯一 config.ts 文件，因为作为菜单需要有 title 等一系列配置，如不需要切记勿添加 config.ts 文件
- * 其中 config.ts  name 属性有一定要求，就是根据路径层级必须 大驼峰命名，入 /home/top/top1  =>  HomeTopTop1  这样做的目的是保持唯一性 对应路由中的 name 属性 ，且需要默认 导出 {config}
+ * 菜单和路由是对应的关系，考虑到并不是所有的路由都需要生成菜单，需要生成菜单的需要在同一目录下有唯一 config.ts 文件，因为作为菜单需要有 title 等一系列配置，如不需要切记勿添加 config.ts 文件，算是项目保留文件吧
+ * 其中 config.ts  name 属性有一定要求，就是根据路径层级必须 大驼峰命名，入 /home/top/top1  =>  HomeTopTop1  这样做的目的是保持唯一性 对应路由中的 name 属性
  */
 export const genRoutes = async () => {
   const tRoutes: Array<RouteRecordRaw> = [] // 路由信息存放数组
@@ -43,9 +44,13 @@ export const genRoutes = async () => {
       configMods.push(mod)
     }
   }
+  console.log(111, JSON.stringify(componentMods))
+  console.log(222, JSON.stringify(configMods))
+
   for (const mod of componentMods) {
     const { __file } = mod.default
     const { name, path } = getName(__file) // 获取文件名
+    // console.log(111, name, path)
     const config = configMods.find(c => c.default?.config.name === name)
     tRoutes.push({
       name,
@@ -56,18 +61,30 @@ export const genRoutes = async () => {
       },
     })
   }
-  const pathMap: { [key: string]: any } = {}
-  const firstFloor = tRoutes.filter((el: any) => el.path.lastIndexOf('/') === 0)
-  firstFloor.forEach((el: any) => {
-    const tk = el.path.substring(1)
-    const k = tk.charAt(0).toUpperCase() + tk.slice(1)
-    pathMap[k] = {
-      ...el,
-      name: k,
-      children: [],
+  console.log(222, tRoutes)
+
+
+  const ffModules = new Set  // 一级模块（菜单）
+  tRoutes.map(el => { 
+    if (el.name) { 
+      //@ts-ignore
+      const ns = el.name?.split(/(?=[A-Z])/)
+      ffModules.add(ns[0] as string)
     }
   })
-  console.log(23456, tRoutes, firstFloor)
+  const pathMap: { [key: string]: any } = {}
+  const firstFloor = tRoutes.filter((el: any) => el.path.lastIndexOf('/') === 0)
+  //@ts-ignore
+  ffModules.forEach((k: string) => { 
+    const t = tRoutes.find(el => el.name === k)
+    if (t) { 
+      pathMap[k] = {
+        ...t,
+        name: k,
+        children: [],
+      }
+    }
+  })
   tRoutes
     .filter((el: any) => el.path.lastIndexOf('/') !== 0)
     .forEach((el: any) => {
@@ -76,9 +93,12 @@ export const genRoutes = async () => {
       const tPaths = paths.map(
         (p: string) => p.charAt(0).toUpperCase() + p.slice(1)
       )
-      for (let i = 1; i < paths?.length; i++) {
+      for (let i = 1;i < paths?.length;i++) {
+        // 拼凑出原始 name
         const pk = tPaths.slice(0, i + 1).join('')
+        // 父级节点 name，用来标记层级结构
         const tpk = tPaths.slice(0, i).join('')
+        // 拼凑路由
         const p = paths.slice(0, i + 1).join('/')
         if (!pathMap[pk]) {
           pathMap[pk] = {
@@ -101,7 +121,6 @@ export const genRoutes = async () => {
         }
       }
     })
-
 
   const tMenu: Array<RouteRecordRaw> = [] // 菜单信息存放数组
   firstFloor
@@ -129,7 +148,6 @@ export const genRoutes = async () => {
     res({ routes: [...baseRouterConfig, ...tRoutes], menu })
   )
 }
-
 export const routerGuard = (router: Router) => {
   router.beforeEach((to, _from, next) => {
     console.log('全局的路由守卫', to)
