@@ -3,7 +3,6 @@ import { onMounted, ref, watch } from 'vue'
 import useConfigStore from '@/store/config'
 import { ElMenu, ElMenuItem, ElIcon } from 'element-plus'
 const configStore = useConfigStore()
-console.log('header 获取', configStore.menus)
 const activeMenu = ref('')
 onMounted(() => {})
 watch(

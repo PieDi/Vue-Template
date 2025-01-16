@@ -5,7 +5,6 @@ import { createPinia } from 'pinia'
 import App from '@/App.vue'
 import useConfigStore from './store/config'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-
 import './style.css'
 import 'element-plus/dist/index.css'
 const init = async () => {

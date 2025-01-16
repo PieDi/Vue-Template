@@ -3,14 +3,14 @@ import { ref, watch } from 'vue'
 import useConfigStore from '@/store/config'
 import { ElMenu, ElMenuItem, ElIcon } from 'element-plus'
 const configStore = useConfigStore()
-console.log('aside 获取', configStore.activeMens)
+console.log('aside 获取', configStore.activeMenu)
 const activeMenu = ref('')
 watch(
-  () => configStore.activeMens,
+  () => configStore.activeMenu,
   () => {
-    if (configStore.activeMens.length) {
-      activeMenu.value = configStore.activeMens[0].name as string
-    }
+    // if (configStore.activeMenu.length) {
+    //   activeMenu.value = configStore.activeMenu[0].name as string
+    // }
   },
   { immediate: true }
 )
@@ -46,7 +46,7 @@ const handleSelect = (_index: string) => {
             <el-menu-item index="1-4-1">item one</el-menu-item>
           </el-sub-menu>
         </el-sub-menu> -->
-      <el-menu-item v-for="m in configStore.activeMens" :index="m.name as string">
+      <el-menu-item v-for="m in configStore.activeMenu" :index="m.name as string">
         <el-icon>
           <component :is="m?.meta?.icon || 'Setting'" />
         </el-icon>

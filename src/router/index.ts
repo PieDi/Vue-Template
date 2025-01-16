@@ -1,6 +1,6 @@
 import { type Router, type RouteRecordRaw } from 'vue-router'
 import { baseRouterConfig } from './base'
-
+import { getFileName, findFirstPage, gMenu } from '@/utils/router'
 const modules = import.meta.glob([
   '@/views/**/*.vue',
   '@/views/**/config.ts',
@@ -8,23 +8,6 @@ const modules = import.meta.glob([
   '!@/views/**/component/**/config.ts',
 ])
 
-interface PNRouter {
-  path: string
-  name: string
-}
-const getName = (path: string): PNRouter => {
-  const ids = path.split('/src/views/')[1].split('/')
-  if (ids[ids.length - 1] === 'index.vue') {
-    ids.pop()
-  }
-  let pStr = ''
-  let nStr = ''
-  ids.forEach(el => {
-    pStr += `/${el}`
-    nStr += el.charAt(0).toUpperCase() + el.slice(1)
-  })
-  return { path: pStr, name: nStr }
-}
 
 /**
  * 约定文件路由
@@ -44,13 +27,11 @@ export const genRoutes = async () => {
       configMods.push(mod)
     }
   }
-  console.log(111, JSON.stringify(componentMods))
-  console.log(222, JSON.stringify(configMods))
-
+  // console.log(111, JSON.stringify(componentMods))
+  // console.log(222, JSON.stringify(configMods))
   for (const mod of componentMods) {
     const { __file } = mod.default
-    const { name, path } = getName(__file) // 获取文件名
-    // console.log(111, name, path)
+    const { name, path } = getFileName(__file) // 获取文件名
     const config = configMods.find(c => c.default?.config.name === name)
     tRoutes.push({
       name,
@@ -61,9 +42,6 @@ export const genRoutes = async () => {
       },
     })
   }
-  console.log(222, tRoutes)
-
-
   const ffModules = new Set  // 一级模块（菜单）
   tRoutes.map(el => { 
     if (el.name) { 
@@ -129,23 +107,16 @@ export const genRoutes = async () => {
       tMenu.push(pathMap[k])
     })
   const menu: Array<RouteRecordRaw> = [] // 菜单信息存放数组
-  const gMenu = (list: any[], tList: any[]) => {
-    list.forEach(el => {
-      if (el?.meta?.menu) {
-        if (el.children.length) { 
-          const tl: any[] = []
-          gMenu(el.children, tl)
-          el.children = tl
-        }
-        tList.push(el)
-      }
-    })
-    tList.sort((a, b) => a.meta.sort - b.meta.sort)
-  }
   gMenu(tMenu, menu)
-  console.log(1234567, menu)
+  const fPage = findFirstPage(menu)
+  console.log('默认重定向第一个', fPage)
   return new Promise(res =>
-    res({ routes: [...baseRouterConfig, ...tRoutes], menu })
+    res({ routes: [{
+      path: '/',
+      redirect: () => {
+        return { path: fPage.path}
+      }
+    }, ...baseRouterConfig, ...tRoutes], menu })
   )
 }
 export const routerGuard = (router: Router) => {
