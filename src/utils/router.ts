@@ -21,8 +21,8 @@ export const getFileName = (path: string): PNRouter => {
 //生成 Menu
 export const gMenu = (list: any[], tList: any[]) => {
   list.forEach(el => {
-    if (el?.meta?.menu) {
-      if (el.children.length) { 
+    if (el?.meta?.menu || el?.meta?.hasGroup) {
+      if (el.children.length) {
         const tl: any[] = []
         gMenu(el.children, tl)
         el.children = tl
@@ -35,9 +35,29 @@ export const gMenu = (list: any[], tList: any[]) => {
 //查找默认的第一个路由信息
 export const findFirstPage = (list: any[]): RouteRecordRaw => {
   const tPage = list[0]
-  if (tPage.children.length) { 
+  if(tPage.component) return tPage
+  if (tPage.children.length) {
     return findFirstPage(tPage.children)
-  } else {
-    return tPage
   }
+  return tPage
+}
+
+export const buildRouterTree = (data: any[]) => {
+  const map = new Map()
+  const result: any[] = []
+  data.forEach(item => {
+    item.children = []
+    map.set(item.name, {...item})
+  })
+  data.forEach(item => {
+    if (item.meta.preGroup) {
+      const parent = map.get(item.meta.preGroup)
+      if (parent) {
+        parent.children.push(item)
+      }
+    } else {
+      result.push(item)
+    }
+  })
+  return result
 }

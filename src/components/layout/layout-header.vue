@@ -2,17 +2,27 @@
 import { onMounted, ref, watch } from 'vue'
 import useConfigStore from '@/store/config'
 import { ElMenu, ElMenuItem, ElIcon } from 'element-plus'
+import { useRoute } from 'vue-router'
 const configStore = useConfigStore()
 const activeMenu = ref('')
+const route = useRoute()
 onMounted(() => {})
 watch(
   () => configStore.menus,
   () => {
     if (configStore.menus.length) {
-      activeMenu.value = configStore.menus[0].name as string
+      activeMenu.value = configStore.menus[0].path
     }
+  }
+)
+watch(
+  () => route.fullPath,
+  () => {
+    activeMenu.value = route.fullPath
   },
-  { immediate: true }
+  {
+    immediate: true,
+  }
 )
 
 const isCollapse = () => {
@@ -28,18 +38,17 @@ const handleSelect = (_index: string) => {
       class="menu"
       :default-active="activeMenu"
       mode="horizontal"
-      :router="true"
+      router
       :collapse="isCollapse"
       @select="handleSelect"
     >
-      <el-menu-item v-for="m in configStore.menus" :index="m.name as string">
+      <el-menu-item v-for="m in configStore.menus" :index="m.path">
         <el-icon>
           <component :is="m?.meta?.icon || 'Setting'" />
         </el-icon>
         {{ m?.meta?.title || '菜单选项' }}
       </el-menu-item>
     </el-menu>
-    <div :style="{ height: '100%', width: '60px' }"></div>
   </header>
 </template>
 <style lang="less" scoped>

@@ -3,8 +3,8 @@ const config = {
   name: 'Home',
   title: '首页',
   icon: 'IconMenu',
-  sort: 2,
-  menu: true
+  sort: 1,
+  menu: true,
 }
 export default {
   config,

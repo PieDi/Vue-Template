@@ -1,22 +1,27 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import useConfigStore from '@/store/config'
-import { ElMenu, ElMenuItem, ElIcon } from 'element-plus'
+import { findFirstPage } from '@/utils/router'
+import { nameToLowPath } from '@/utils/layout'
+import { ElMenu } from 'element-plus'
+import AsideItem from './aside-item.vue'
 const configStore = useConfigStore()
 console.log('aside 获取', configStore.activeMenu)
 const activeMenu = ref('')
 watch(
   () => configStore.activeMenu,
-  () => {
-    // if (configStore.activeMenu.length) {
-    //   activeMenu.value = configStore.activeMenu[0].name as string
-    // }
+  (newVal) => {
+    if (newVal?.meta?.menu) {
+      activeMenu.value = nameToLowPath(newVal.meta.name as string)
+    } else { 
+      const fPage = findFirstPage([newVal])
+      activeMenu.value = nameToLowPath(fPage.name as string)
+    }
   },
   { immediate: true }
 )
-
 const handleSelect = (_index: string) => {
-  configStore.updateActiveMenus(_index)
+  // configStore.updateActiveMenus(_index)
 }
 </script>
 <template>
@@ -29,32 +34,9 @@ const handleSelect = (_index: string) => {
       :router="true"
       @select="handleSelect"
     >
-    <!-- <el-sub-menu index="1">
-          <template #title>
-            <el-icon><location /></el-icon>
-            <span>Navigator One</span>
-          </template>
-          <el-menu-item-group title="Group One">
-            <el-menu-item index="1-1">item one</el-menu-item>
-            <el-menu-item index="1-2">item two</el-menu-item>
-          </el-menu-item-group>
-          <el-menu-item-group title="Group Two">
-            <el-menu-item index="1-3">item three</el-menu-item>
-          </el-menu-item-group>
-          <el-sub-menu index="1-4">
-            <template #title>item four</template>
-            <el-menu-item index="1-4-1">item one</el-menu-item>
-          </el-sub-menu>
-        </el-sub-menu> -->
-      <el-menu-item v-for="m in configStore.activeMenu" :index="m.name as string">
-        <el-icon>
-          <component :is="m?.meta?.icon || 'Setting'" />
-        </el-icon>
-        {{ m?.meta?.title || '菜单选项' }}
-      </el-menu-item>
+      <AsideItem v-if="configStore.activeMenu" :m-item="configStore.activeMenu"/>
     </el-menu>
     </div>
- 
   </aside>
 </template>
 <style lang="less" scoped>

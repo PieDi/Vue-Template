@@ -1,13 +1,17 @@
 import { type Router, type RouteRecordRaw } from 'vue-router'
 import { baseRouterConfig } from './base'
-import { getFileName, findFirstPage, gMenu } from '@/utils/router'
+import {
+  getFileName,
+  findFirstPage,
+  gMenu,
+  buildRouterTree,
+} from '@/utils/router'
 const modules = import.meta.glob([
   '@/views/**/*.vue',
   '@/views/**/config.ts',
   '!@/views/**/component/**/*.vue',
   '!@/views/**/component/**/config.ts',
 ])
-
 
 /**
  * 约定文件路由
@@ -27,8 +31,6 @@ export const genRoutes = async () => {
       configMods.push(mod)
     }
   }
-  // console.log(111, JSON.stringify(componentMods))
-  // console.log(222, JSON.stringify(configMods))
   for (const mod of componentMods) {
     const { __file } = mod.default
     const { name, path } = getFileName(__file) // 获取文件名
@@ -42,90 +44,80 @@ export const genRoutes = async () => {
       },
     })
   }
-  const ffModules = new Set  // 一级模块（菜单）
-  tRoutes.map(el => { 
-    if (el.name) { 
-      //@ts-ignore
-      const ns = el.name?.split(/(?=[A-Z])/)
+  const ffModules: Set<string> = new Set() // 一级模块（菜单）
+  tRoutes.map(el => {
+    if (el.name) {
+      const ns = (el.name as string)?.split(/(?=[A-Z])/)
       ffModules.add(ns[0] as string)
     }
   })
-  const pathMap: { [key: string]: any } = {}
-  const firstFloor = tRoutes.filter((el: any) => el.path.lastIndexOf('/') === 0)
-  //@ts-ignore
-  ffModules.forEach((k: string) => { 
-    const t = tRoutes.find(el => el.name === k)
-    if (t) { 
-      pathMap[k] = {
-        ...t,
-        name: k,
-        children: [],
+
+  const gRouter: any[] = []
+  tRoutes.forEach((el: any) => {
+    let paths = el.path.split('/')
+    paths.shift()
+    const tPaths = paths.map(
+      (p: string) => p.charAt(0).toUpperCase() + p.slice(1)
+    )
+    if (paths.length === 1) {
+      gRouter.push({ ...el, children: [] })
+    } else {
+      for (let i = 1; i < paths?.length; i++) {
+        const pk = tPaths.slice(0, i + 1).join('') // 拼凑出原始 name
+        const tpk = tPaths.slice(0, i).join('') // 父级节点 name，用来标记层级结构
+        const p = paths.slice(0, i + 1).join('/') // 拼凑路由
+        const gConfig = configMods.find(c => c.default?.config.name === pk) // 菜单组的配置文件
+        let meta = el?.meta
+        if (gConfig) meta = gConfig.default?.config
+        const mRoute: any = {
+          path: `/${p}`,
+          name: pk,
+          meta: {
+            ...meta,
+            preGroup: tpk,
+          },
+          children: [],
+        }
+        if (i === paths.length - 1) {
+          mRoute.component = el.component
+        }
+        gRouter.push(mRoute)
       }
     }
   })
-  tRoutes
-    .filter((el: any) => el.path.lastIndexOf('/') !== 0)
-    .forEach((el: any) => {
-      let paths = el.path.split('/')
-      paths.shift()
-      const tPaths = paths.map(
-        (p: string) => p.charAt(0).toUpperCase() + p.slice(1)
-      )
-      for (let i = 1;i < paths?.length;i++) {
-        // 拼凑出原始 name
-        const pk = tPaths.slice(0, i + 1).join('')
-        // 父级节点 name，用来标记层级结构
-        const tpk = tPaths.slice(0, i).join('')
-        // 拼凑路由
-        const p = paths.slice(0, i + 1).join('/')
-        if (!pathMap[pk]) {
-          pathMap[pk] = {
-            path: `/${p}`,
-            name: pk,
-            meta: el?.meta,
-            children: [],
-          }
-        }
-        const eIdx = pathMap[tpk]?.children?.findIndex(
-          //@ts-ignore
-          el => el.name === pk
-        )
-        if (eIdx < 0) {
-          pathMap[tpk].children.push(pathMap[pk])
-        }
-      
-        if (i === paths.length - 1) {
-          pathMap[pk].component = el.component
-        }
-      }
-    })
 
-  const tMenu: Array<RouteRecordRaw> = [] // 菜单信息存放数组
-  firstFloor
-    .map((el: any) => el.name)
-    .forEach((k: string) => {
-      tMenu.push(pathMap[k])
-    })
+  const routerTree = buildRouterTree(gRouter)
   const menu: Array<RouteRecordRaw> = [] // 菜单信息存放数组
-  gMenu(tMenu, menu)
+  gMenu(routerTree, menu)
   const fPage = findFirstPage(menu)
-  console.log('默认重定向第一个', fPage)
+  console.log('menu', menu)
+  console.log('tRoutes', tRoutes)
   return new Promise(res =>
-    res({ routes: [{
-      path: '/',
-      redirect: () => {
-        return { path: fPage.path}
-      }
-    }, ...baseRouterConfig, ...tRoutes], menu })
+    res({
+      routes: [
+        {
+          path: '/',
+          redirect: () => {
+            return { path: fPage.path }
+          },
+        },
+        ...baseRouterConfig,
+        ...tRoutes,
+      ],
+      menu,
+    })
   )
 }
+let hasRedirected = false;
 export const routerGuard = (router: Router) => {
-  router.beforeEach((to, _from, next) => {
-    console.log('全局的路由守卫', to)
+  router.beforeEach((to, from, next) => {
+    console.log('全局的路由守卫', from, to)
     if (to.meta.title) {
       // @ts-ignore
       document.title = to.meta.title
     }
-    next()
+
+      next();
+
   })
 }
