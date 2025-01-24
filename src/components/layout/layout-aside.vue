@@ -1,41 +1,62 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import useConfigStore from '@/store/config'
-import { findFirstPage } from '@/utils/router'
-import { nameToLowPath } from '@/utils/layout'
 import { ElMenu } from 'element-plus'
-import AsideItem from './aside-item.vue'
+import AsideGItem from './aside-gItem.vue'
+import { type RouteRecordRaw } from 'vue-router'
+import { useRoute } from 'vue-router'
+
 const configStore = useConfigStore()
-console.log('aside 获取', configStore.activeMenu)
 const activeMenu = ref('')
+const route = useRoute()
 watch(
-  () => configStore.activeMenu,
-  (newVal) => {
-    if (newVal?.meta?.menu) {
-      activeMenu.value = nameToLowPath(newVal.meta.name as string)
-    } else { 
-      const fPage = findFirstPage([newVal])
-      activeMenu.value = nameToLowPath(fPage.name as string)
-    }
+  () => route.fullPath,
+  () => {
+    activeMenu.value = route.fullPath
   },
-  { immediate: true }
+  {
+    immediate: true,
+  }
 )
+
 const handleSelect = (_index: string) => {
   // configStore.updateActiveMenus(_index)
+  console.log('handleSelect', _index)
 }
+const menuGroup = computed(() => {
+  const res: RouteRecordRaw[] = []
+  configStore.activeMenuGroup?.children?.forEach(item => {
+    if (item.component || item.children?.length) res.push(item)
+  })
+  return res
+})
 </script>
 <template>
   <aside class="aside">
     <div class="logo"></div>
     <div class="content">
       <el-menu
-      class="menu"
-      :default-active="activeMenu"
-      :router="true"
-      @select="handleSelect"
-    >
-      <AsideItem v-if="configStore.activeMenu" :m-item="configStore.activeMenu"/>
-    </el-menu>
+        class="menu"
+        :default-active="activeMenu"
+        router
+        @select="handleSelect"
+      >
+        <template v-if="configStore.activeMenuGroup?.component">
+          <el-menu-item :index="configStore.activeMenuGroup.path">
+            <el-icon>
+              <component
+                :is="configStore.activeMenuGroup?.meta?.icon || 'Setting'"
+              />
+            </el-icon>
+            {{ configStore.activeMenuGroup?.meta?.title }}
+          </el-menu-item>
+        </template>
+        <AsideGItem
+          v-for="(m, i) in menuGroup"
+          :m-item="m"
+          :key="m.path || i"
+        />
+      </el-menu>
     </div>
   </aside>
 </template>
@@ -49,7 +70,7 @@ const handleSelect = (_index: string) => {
   }
   .content {
     height: calc(100% - 60px);
-    overflow-y: auto
+    overflow-y: auto;
   }
 }
 </style>

@@ -2,46 +2,44 @@
 import { onMounted, ref, watch } from 'vue'
 import useConfigStore from '@/store/config'
 import { ElMenu, ElMenuItem, ElIcon } from 'element-plus'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 const configStore = useConfigStore()
 const activeMenu = ref('')
 const route = useRoute()
-onMounted(() => {})
-watch(
-  () => configStore.menus,
-  () => {
-    if (configStore.menus.length) {
-      activeMenu.value = configStore.menus[0].path
-    }
-  }
-)
+const router = useRouter()
+onMounted(() => { })
 watch(
   () => route.fullPath,
   () => {
-    activeMenu.value = route.fullPath
+    const paths = route.fullPath.split('/')
+    const p = `/${paths[1]}`
+    if (p !== activeMenu.value) {
+      activeMenu.value = p
+      const tMenu = configStore.menus.find(m => m.path === p)
+      if (tMenu) {
+        configStore.updateActiveMenus(tMenu?.name)
+        if (!tMenu?.component) {
+          setTimeout(() => {
+            //@ts-ignore
+            router.push({ path: tMenu.children[0].path })
+          }, 500)
+        }
+      }
+    }
   },
   {
     immediate: true,
   }
 )
-
-const isCollapse = () => {
-  return false
-}
-const handleSelect = (_index: string) => {
-  configStore.updateActiveMenus(_index)
+const handleSelect = (index: string) => {
+  const tMenu = configStore.menus.find(m => m.path === index)
+  configStore.updateActiveMenus(tMenu?.name)
 }
 </script>
 <template>
   <header class="header">
-    <el-menu
-      class="menu"
-      :default-active="activeMenu"
-      mode="horizontal"
-      router
-      :collapse="isCollapse"
-      @select="handleSelect"
-    >
+    <!-- :collapse="isCollapse" -->
+    <el-menu class="menu" :default-active="activeMenu" mode="horizontal" router @select="handleSelect">
       <el-menu-item v-for="m in configStore.menus" :index="m.path">
         <el-icon>
           <component :is="m?.meta?.icon || 'Setting'" />

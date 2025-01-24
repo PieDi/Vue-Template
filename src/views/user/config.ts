@@ -3,7 +3,7 @@ const config = {
   title: '用户',
   icon: 'IconMenu',
   sort: 3,
-  menu: true
+  menu: true,
 }
 export default {
   config,

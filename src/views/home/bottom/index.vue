@@ -1,5 +1,5 @@
 <template>
-  <div>home-top</div>
+  <div>home-bottom</div>
 </template>
 <script setup lang="ts"></script>
 <style lang="less" scoped></style>

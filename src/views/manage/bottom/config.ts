@@ -1,8 +1,8 @@
 const config = {
-  name: 'ManageTop',
-  title: '管理-头部',
+  name: 'ManageBottom',
+  title: '管理-底部',
   icon: 'IconMenu',
-  sort: 1,
+  sort: 2,
   menu: true
 }
 export default {

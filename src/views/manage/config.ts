@@ -3,7 +3,7 @@ const config = {
   name: 'Manage',
   title: '管理',
   icon: 'IconMenu',
-  sort: 1,
+  sort: 2,
   menu: true
 }
 export default {

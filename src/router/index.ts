@@ -12,7 +12,6 @@ const modules = import.meta.glob([
   '!@/views/**/component/**/*.vue',
   '!@/views/**/component/**/config.ts',
 ])
-
 /**
  * 约定文件路由
  * views 文件夹下排除 component 会自动生成路由
@@ -44,15 +43,11 @@ export const genRoutes = async () => {
       },
     })
   }
-  const ffModules: Set<string> = new Set() // 一级模块（菜单）
-  tRoutes.map(el => {
-    if (el.name) {
-      const ns = (el.name as string)?.split(/(?=[A-Z])/)
-      ffModules.add(ns[0] as string)
-    }
-  })
-
   const gRouter: any[] = []
+  const routerMap: {[key: string]: any} = {}
+  tRoutes.forEach((el: any) => { 
+    routerMap[el.name] = { ...el, children: [] }
+  })
   tRoutes.forEach((el: any) => {
     let paths = el.path.split('/')
     paths.shift()
@@ -66,6 +61,18 @@ export const genRoutes = async () => {
         const pk = tPaths.slice(0, i + 1).join('') // 拼凑出原始 name
         const tpk = tPaths.slice(0, i).join('') // 父级节点 name，用来标记层级结构
         const p = paths.slice(0, i + 1).join('/') // 拼凑路由
+        if (!routerMap[tpk]) {
+          // 父级节点不存在，则构建
+          const gConfig = configMods.find(c => c.default?.config.name === tpk)
+          const fRoute = {
+            path: `/${paths.slice(0, i).join('/')}`,
+            name: tpk,
+            meta: gConfig.default?.config,
+            children: [],
+          }
+          routerMap[tpk] = fRoute
+          gRouter.push(fRoute)
+        }
         const gConfig = configMods.find(c => c.default?.config.name === pk) // 菜单组的配置文件
         let meta = el?.meta
         if (gConfig) meta = gConfig.default?.config
@@ -80,18 +87,15 @@ export const genRoutes = async () => {
         }
         if (i === paths.length - 1) {
           mRoute.component = el.component
+          gRouter.push(mRoute)
         }
-        gRouter.push(mRoute)
       }
     }
   })
-
   const routerTree = buildRouterTree(gRouter)
   const menu: Array<RouteRecordRaw> = [] // 菜单信息存放数组
   gMenu(routerTree, menu)
   const fPage = findFirstPage(menu)
-  console.log('menu', menu)
-  console.log('tRoutes', tRoutes)
   return new Promise(res =>
     res({
       routes: [
@@ -108,7 +112,6 @@ export const genRoutes = async () => {
     })
   )
 }
-let hasRedirected = false;
 export const routerGuard = (router: Router) => {
   router.beforeEach((to, from, next) => {
     console.log('全局的路由守卫', from, to)
@@ -116,8 +119,6 @@ export const routerGuard = (router: Router) => {
       // @ts-ignore
       document.title = to.meta.title
     }
-
-      next();
-
+    next();
   })
 }

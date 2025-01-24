@@ -21,7 +21,7 @@ export const getFileName = (path: string): PNRouter => {
 //生成 Menu
 export const gMenu = (list: any[], tList: any[]) => {
   list.forEach(el => {
-    if (el?.meta?.menu || el?.meta?.hasGroup) {
+    if (el?.meta?.menu) {
       if (el.children.length) {
         const tl: any[] = []
         gMenu(el.children, tl)
