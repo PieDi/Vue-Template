@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PropType, toRaw, computed, watch } from 'vue'
+import { PropType, toRaw, computed } from 'vue'
 import { type RouteRecordRaw } from 'vue-router'
 const props = defineProps({
   mItem: {

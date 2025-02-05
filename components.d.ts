@@ -8,10 +8,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AsideGItem: typeof import('./src/components/layout/aside-gItem.vue')['default']
-    AsideItem: typeof import('./src/components/layout/aside-item.vue')['default']
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElMenuItem: typeof import('element-plus/es')['ElMenuItem']
-    ElMenuItemGroup: typeof import('element-plus/es')['ElMenuItemGroup']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
     Layout: typeof import('./src/components/layout/index.vue')['default']
     LayoutAside: typeof import('./src/components/layout/layout-aside.vue')['default']

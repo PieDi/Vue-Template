@@ -25,7 +25,7 @@ const handleSelect = (_index: string) => {
 }
 const menuGroup = computed(() => {
   const res: RouteRecordRaw[] = []
-  configStore.activeMenuGroup?.children?.forEach(item => {
+  configStore.activeMenuGroup?.children?.forEach((item: RouteRecordRaw) => {
     if (item.component || item.children?.length) res.push(item)
   })
   return res

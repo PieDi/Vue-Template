@@ -3,6 +3,9 @@ import { onMounted, ref, watch } from 'vue'
 import useConfigStore from '@/store/config'
 import { ElMenu, ElMenuItem, ElIcon } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
+import { type RouteRecordRaw } from 'vue-router'
+
+
 const configStore = useConfigStore()
 const activeMenu = ref('')
 const route = useRoute()
@@ -15,7 +18,7 @@ watch(
     const p = `/${paths[1]}`
     if (p !== activeMenu.value) {
       activeMenu.value = p
-      const tMenu = configStore.menus.find(m => m.path === p)
+      const tMenu = configStore.menus.find((m: RouteRecordRaw)  => m.path === p)
       if (tMenu) {
         configStore.updateActiveMenus(tMenu?.name)
         if (!tMenu?.component) {
@@ -32,7 +35,7 @@ watch(
   }
 )
 const handleSelect = (index: string) => {
-  const tMenu = configStore.menus.find(m => m.path === index)
+  const tMenu = configStore.menus.find((m: RouteRecordRaw) => m.path === index)
   configStore.updateActiveMenus(tMenu?.name)
 }
 </script>

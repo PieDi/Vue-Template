@@ -5,17 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite --open",
-    "build": "vue-tsc -b && vite build",
+    "build:test": "tsc -p tsconfig.app.json && vite build --mode test",
+    "build:pro": "tsc -p tsconfig.app.json && vite build --mode pro",
     "preview": "vite preview"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.7.9",
     "element-plus": "^2.8.0",
     "pinia": "^2.2.1",
     "vue": "^3.4.35",
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
+    "@types/node": "^22.10.10",
     "@vitejs/plugin-vue": "^5.1.2",
     "less": "^4.2.0",
     "less-loader": "^12.2.0",

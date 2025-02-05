@@ -6,6 +6,7 @@ import {
   gMenu,
   buildRouterTree,
 } from '@/utils/router'
+
 const modules = import.meta.glob([
   '@/views/**/*.vue',
   '@/views/**/config.ts',
